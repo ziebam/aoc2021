@@ -1,42 +1,20 @@
-from std/parseutils import parseInt
-from std/math import sum
+import std/strutils
 
 proc loadData(path: string): seq[int] =
-    let data = open(path)
+    let data: File = open(path)
     defer: data.close()
 
-    var measurements: seq[int] = @[]
     var line: string
 
-    while readLine(data, line):
-        var measurement: int
-        discard parseInt(line, measurement, 0)
-        measurements.add(measurement)
+    while readLine(data, line): result.add(parseInt(line))
 
-    return measurements
-
-proc partOne(): int =
+proc partOneAndTwo(windowSize: int): int =
     let measurements: seq[int] = loadData("day1/day1.txt")
 
-    var solution: int = 0
-    for index, measurement in measurements:
-        if index != 0 and measurements[index] - measurements[index - 1] > 0:
-            solution += 1
+    let lastIndex: BackwardsIndex = ^(windowSize + 1)
+    for index, measurement in measurements[0 .. lastIndex]:
+        if measurements[index + windowSize] - measurements[index] > 0:
+            inc result
 
-    return solution
-
-proc partTwo(): int =
-    let measurements: seq[int] = loadData("day1/day1.txt")
-
-    var solution: int = 0
-    for index, measurement in measurements[0 .. ^4]:
-        let firstWindowSum = sum(measurements[index .. index + 2])
-        let secondWindowSum = sum(measurements[index + 1 .. index + 3])
-
-        if secondWindowSum - firstWindowSum > 0:
-            solution += 1
-
-    return solution
-
-echo "Part one: ", partOne()
-echo "Part two: ", partTwo()
+echo "Part one: ", partOneAndTwo(1)
+echo "Part two: ", partOneAndTwo(3)
