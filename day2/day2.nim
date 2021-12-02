@@ -18,40 +18,32 @@ proc loadData(path: string): seq[Command] =
     var line: string
 
     while readLine(data, line):
-        let line = line.split(" ")
-        let direction = line[0]
-        let units = parseInt(line[1])
+        let line: seq[string] = line.split(" ")
+        let direction: string = line[0]
+        let units: int = parseInt(line[1])
 
         result.add(Command(direction: direction, units: units))
 
-proc partOne(): Solution =
-    let commands = loadData("day2/day2.txt")
+proc partOneAndTwo(part: int): Solution =
+    let commands: seq[Command] = loadData("day2/day2.txt")
 
     for command in commands:
         case command.direction
         of "forward":
-            result.horizontalPos += command.units
+            if part == 1: result.horizontalPos += command.units
+            elif part == 2:
+                result.horizontalPos += command.units
+                result.depth += command.units * result.aim
         of "down":
-            result.depth += command.units
+            if part == 1: result.depth += command.units
+            elif part == 2: result.aim += command.units
         of "up":
-            result.depth -= command.units
-
-proc partTwo(): Solution =
-    let commands = loadData("day2/day2.txt")
-
-    for command in commands:
-        case command.direction
-        of "down":
-            result.aim += command.units
-        of "up":
-            result.aim -= command.units
-        of "forward":
-            result.horizontalPos += command.units
-            result.depth += command.units * result.aim
+            if part == 1: result.depth -= command.units
+            elif part == 2: result.aim -= command.units
 
 
-let solution = partOne()
-echo solution.horizontalPos * solution.depth
+let partOne: Solution = partOneAndTwo(1)
+let partTwo: Solution = partOneAndTwo(2)
 
-let solution2 = partTwo()
-echo solution2.horizontalPos * solution2.depth
+echo "Part one: ", partOne.horizontalPos * partOne.depth
+echo "Part two: ", partTwo.horizontalPos * partTwo.depth
