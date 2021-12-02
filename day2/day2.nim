@@ -9,6 +9,7 @@ type
     Solution = object
         horizontalPos: int
         depth: int
+        aim: int
 
 proc loadData(path: string): seq[Command] =
     let data: File = open(path)
@@ -35,5 +36,22 @@ proc partOne(): Solution =
         of "up":
             result.depth -= command.units
 
+proc partTwo(): Solution =
+    let commands = loadData("day2/day2.txt")
+
+    for command in commands:
+        case command.direction
+        of "down":
+            result.aim += command.units
+        of "up":
+            result.aim -= command.units
+        of "forward":
+            result.horizontalPos += command.units
+            result.depth += command.units * result.aim
+
+
 let solution = partOne()
 echo solution.horizontalPos * solution.depth
+
+let solution2 = partTwo()
+echo solution2.horizontalPos * solution2.depth
