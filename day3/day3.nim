@@ -1,3 +1,5 @@
+import std/math
+import std/sequtils
 import std/strutils
 
 proc loadData(path: string): seq[string] =
@@ -28,4 +30,40 @@ proc partOne(): int =
 
     return parseBinInt(gammaRate) * parseBinInt(epsilonRate)
 
-echo partOne()
+proc countBitsAtIndex(binNumbers: seq[string], index: int): int =
+    for binNumber in binNumbers:
+        if binNumber[index] == '1':
+            inc result
+
+proc partTwo(): int =
+    var binNumbers: seq[string] = loadData("day3/day3.txt")
+
+    var index = 0
+    while len(binNumbers) > 1:
+        let bitCount = countBitsAtIndex(binNumbers, index)
+        var majorityBit: char
+        if bitCount >= (round(len(binNumbers) / 2)).int:
+            majorityBit = '1'
+        else:
+            majorityBit = '0'
+        binNumbers = filter(binNumbers, proc(binNumber: string): bool = binNumber[index] == majorityBit)
+        inc index
+    let oxygenGeneratorRating = binNumbers[0]
+
+    binNumbers = loadData("day3/day3.txt")
+    index = 0
+    while len(binNumbers) > 1:
+        let bitCount = countBitsAtIndex(binNumbers, index)
+        var minorityBit: char
+        if bitCount < (round(len(binNumbers) / 2)).int:
+            minorityBit = '1'
+        else:
+            minorityBit = '0'
+        binNumbers = filter(binNumbers, proc(binNumber: string): bool = binNumber[index] == minorityBit)
+        inc index
+    let carbonDioxideScrubberRating = binNumbers[0]
+
+    return parseBinInt(oxygenGeneratorRating) * parseBinInt(carbonDioxideScrubberRating)
+
+echo "Part one: ", partOne()
+echo "Part two: ", partTwo()
