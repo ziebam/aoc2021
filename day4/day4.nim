@@ -62,9 +62,7 @@ proc score(board: seq[seq[Number]], drawnNumber: int): int =
     result = sumOfUnmarked * drawnNumber
 
 
-proc partOne(): int =
-    var bingo = loadData("day4/day4.txt")
-    
+proc partOne(bingo: var Bingo): int =
     for drawnNumber in bingo.drawnNumbers:
         for board in bingo.boards.mitems:
             let numberInBoard = checkNumberInBoard(board, drawnNumber)
@@ -73,4 +71,31 @@ proc partOne(): int =
             if checkIfIsWinning(board):
                 return score(board, drawnNumber)
 
-echo "Part one: ", partOne()
+
+type
+    WinningBoard = object
+        index: int
+        score: int
+
+proc partTwo(bingo: var Bingo): int = 
+    var winningBoards: seq[WinningBoard]
+    for drawnNumber in bingo.drawnNumbers:
+        var index = 0
+        for board in bingo.boards.mitems:
+            let numberInBoard = checkNumberInBoard(board, drawnNumber)
+            if numberInBoard != [-1, -1]:
+                board[numberInBoard[0]][numberInBoard[1]].marked = true
+            if checkIfIsWinning(board):
+                let winningBoard = WinningBoard(index: index, score: score(board, drawnNumber))
+                if any(winningBoards, proc(board: WinningBoard): bool = board.index == index):
+                    inc index
+                    continue
+                winningBoards.add(winningBoard)
+            inc index
+
+    result = winningBoards[winningBoards.len - 1].score
+
+var bingo = loadData("day4/day4.txt")
+
+echo "Part one: ", partOne(bingo)
+echo "Part two: ", partTwo(bingo)
