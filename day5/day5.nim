@@ -1,5 +1,5 @@
 import std/sequtils
-import std/strutils
+import std/strutils 
 
 type
     Line = object
@@ -57,6 +57,44 @@ proc partOne(lines: seq[Line]): int =
             if position > 1:
                 result += 1
 
+proc partTwo(lines: seq[Line]): int =
+    let size = findSize(lines)
+    let sizeX = size[0]
+    let sizeY = size[1]
+
+    var diagram: seq[seq[int]]
+    for i in 0..sizeY - 1:
+        diagram.add(newSeq[int](sizeX))
+
+    for line in lines:
+        let horizontal = line.startY == line.endY
+        let vertical = line.startX == line.endX
+        if horizontal:
+            for x in min(line.startX, line.endX)..max(line.startX, line.endX):
+                inc diagram[line.startY][x]
+        elif vertical:
+            for y in min(line.startY, line.endY)..max(line.startY, line.endY):
+                inc diagram[y][line.startX]
+        else:
+            var xs: seq[int]
+            var ys: seq[int]
+            if line.startX > line.endX:
+                xs = toSeq(countdown(line.startX, line.endX))
+            else:
+                xs = toSeq(line.startX..line.endX)
+            if line.startY > line.endY:
+                ys = toSeq(countdown(line.startY, line.endY))
+            else:
+                ys = toSeq(line.startY..line.endY)
+            for coords in zip(xs, ys):
+                inc diagram[coords[1]][coords[0]]
+
+    for row in diagram:
+        for position in row:
+            if position > 1:
+                result += 1
+
 let lines = loadData("day5/day5.txt")
 
 echo "Part one: ", partOne(lines)
+echo "Part two: ", partTwo(lines)
