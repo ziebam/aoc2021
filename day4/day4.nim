@@ -13,37 +13,40 @@ type
 
 
 proc loadData(path: string): Bingo =
-    let data: string = readFile(path)
-    let lines: seq[string] = data.splitLines()
+    let data: File = open(path)
+    defer: data.close()
 
-    for index, line in lines:
-        if index == 0:
-            result.drawnNumbers = map(line.split(","), proc(x: string): int = parseInt(x))
-        elif index mod 6 == 1:
-            continue
-        elif index mod 6 == 2:
-            var grid: seq[seq[Number]]
-            for i in 0 .. 4:
-                grid.add(map(lines[index + i].splitWhitespace(), proc(x: string): Number =
-                        result.value = parseInt(x)
-                        result.marked = false
-                    )
+    var line: string
+    var scoreLine: bool = true
+    var grid: seq[seq[Number]] = @[]
+    while readLine(data, line):
+        if scoreLine:
+            result.drawnNumbers.add(map(line.split(","), proc(drawnNumber: string): int = parseInt(drawnNumber)))
+            scoreLine = false
+        elif line.len > 0:
+            grid.add(map(line.splitWhiteSpace(), proc(number: string): Number =
+                    result.value = parseInt(number)
+                    result.marked = false
                 )
-            result.boards.add(grid)
+            )
+        else:
+            if grid.len > 0:
+                result.boards.add(grid)
+            grid = @[]
 
-proc checkNumberInBoard(board: seq[seq[Number]], drawnNumber: int): array[0..1, int] =
+proc guess(board: seq[seq[Number]], drawnNumber: int): array[0..1, int] =
     result = [-1, -1]
     for y, row in board:
         for x, number in row:
             if number.value == drawnNumber:
                 result = [y, x]
 
-proc checkIfIsWinning(board: seq[seq[Number]]): bool =
+proc checkForWin(board: seq[seq[Number]]): bool =
     for row in board:
         if all(row, proc(x: Number): bool = x.marked):
             return true
     
-    for columnNumber in 0 .. board[0].len - 1:
+    for columnNumber in 0 ..< board[0].len:
         var column: seq[Number]
         for row in board:
             column.add(row[columnNumber])
@@ -52,24 +55,24 @@ proc checkIfIsWinning(board: seq[seq[Number]]): bool =
 
     return false
 
-proc score(board: seq[seq[Number]], drawnNumber: int): int =
-    var sumOfUnmarked: int = 0
+proc calculateScore(board: seq[seq[Number]], drawnNumber: int): int =
     for row in board:
         for number in row:
             if not number.marked:
-                sumOfUnmarked += number.value
+                result += number.value
 
-    result = sumOfUnmarked * drawnNumber
+    result *= drawnNumber
 
 
 proc partOne(bingo: var Bingo): int =
     for drawnNumber in bingo.drawnNumbers:
         for board in bingo.boards.mitems:
-            let numberInBoard = checkNumberInBoard(board, drawnNumber)
+            let numberInBoard = guess(board, drawnNumber)
             if numberInBoard != [-1, -1]:
-                board[numberInBoard[0]][numberInBoard[1]].marked = true
-            if checkIfIsWinning(board):
-                return score(board, drawnNumber)
+                let y = numberInBoard[0]; let x = numberInBoard[1]
+                board[y][x].marked = true
+            if checkForWin(board):
+                return calculateScore(board, drawnNumber)
 
 
 type
@@ -82,11 +85,12 @@ proc partTwo(bingo: var Bingo): int =
     for drawnNumber in bingo.drawnNumbers:
         var index = 0
         for board in bingo.boards.mitems:
-            let numberInBoard = checkNumberInBoard(board, drawnNumber)
+            let numberInBoard = guess(board, drawnNumber)
             if numberInBoard != [-1, -1]:
-                board[numberInBoard[0]][numberInBoard[1]].marked = true
-            if checkIfIsWinning(board):
-                let winningBoard = WinningBoard(index: index, score: score(board, drawnNumber))
+                let y = numberInBoard[0]; let x = numberInBoard[1]
+                board[y][x].marked = true
+            if checkForWin(board):
+                let winningBoard = WinningBoard(index: index, score: calculateScore(board, drawnNumber))
                 if any(winningBoards, proc(board: WinningBoard): bool = board.index == index):
                     inc index
                     continue
@@ -97,5 +101,5 @@ proc partTwo(bingo: var Bingo): int =
 
 var bingo = loadData("day4/day4.txt")
 
-echo "Part one: ", partOne(bingo)
-echo "Part two: ", partTwo(bingo)
+echo "Part one: ", partOne(bingo) # 58412
+echo "Part two: ", partTwo(bingo) # 10030
