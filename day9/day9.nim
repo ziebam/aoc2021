@@ -19,34 +19,6 @@ proc loadData(path: string): seq[seq[Point]] =
                 heightMapRow.add(Point(x: jdx, y: idx, height: parseInt($point), visited: false))
             result.add(heightMapRow)
 
-# proc partOne(heightMap: seq[seq[int]]): int =
-#     for yIdx, row in heightMap:
-#         for xIdx, height in row:
-#             var lowPoint = true
-
-#             # Check the left neighbor.
-#             if xIdx > 0:
-#                 if height >= heightMap[yIdx][xIdx - 1]:
-#                     lowPoint = false
-            
-#             # Check the top neighbor.
-#             if yIdx > 0:
-#                 if height >= heightMap[yIdx - 1][xIdx]:
-#                     lowPoint = false
-            
-#             # Check the right neighbor.
-#             if xIdx < row.len - 1:
-#                 if height >= heightMap[yIdx][xIdX + 1]:
-#                     lowPoint = false
-
-#             # Check the bottom neighbor.
-#             if yIdx < heightMap.len - 1:
-#                 if height >= heightMap[yIdx + 1][xIdx]:
-#                     lowPoint = false
-            
-#             if lowPoint:
-#                 result += height + 1
-
 proc getNeighbors(point: Point, heightMap: var seq[seq[Point]]): seq[Point] =
     # Left neighbor.
     if point.x > 0:
@@ -63,6 +35,22 @@ proc getNeighbors(point: Point, heightMap: var seq[seq[Point]]): seq[Point] =
     # Bottom neighbor.
     if point.y < heightMap.len - 1:
         result.add(heightMap[point.y + 1][point.x])
+
+proc partOne(heightMap: var seq[seq[Point]]): int =
+    for row in heightMap:
+        for point in row:
+            var isLow = true
+
+            let neighbors = getNeighbors(point, heightMap)
+            for neighbor in neighbors:
+                if neighbor.height <= point.height:
+                    isLow = false
+                    break
+
+            if isLow:
+                result += point.height + 1
+
+
 
 proc findBasin(point: Point, heightMap: var seq[seq[Point]]): int =
     let neighbors = getNeighbors(point, heightMap)
@@ -98,5 +86,5 @@ proc partTwo(heightMap: var seq[seq[Point]]): int =
 
 var heightMap = loadData("day9/day9.txt")
 
-# echo "Part one: ", partOne(heightMap)
+echo "Part one: ", partOne(heightMap)
 echo "Part two: ", partTwo(heightMap)
