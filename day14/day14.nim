@@ -1,5 +1,4 @@
-import std/algorithm
-import std/sequtils
+import std/strformat
 import std/strutils
 import std/tables
 
@@ -29,28 +28,67 @@ proc getPairs(pTemplate: string): seq[string] =
     for idx, element in pTemplate[0..<pTemplate.len - 1]:
         result.add(join([element, pTemplate[idx + 1]]))
 
-proc partOne(polymerization: Polymerization, steps: int): int =
+
+type
+    Pair = object
+        count: int
+        identifier: string
+        createsElement: char
+        createsPairs: array[0..1, string]
+
+proc getInitialPairs(rules: Table[string, char]): seq[Pair] =
+    for pair, element in rules.pairs:
+        result.add(Pair(count: 0, identifier: pair, createsElement: element, createsPairs: [fmt"{pair[0]}{element}", fmt"{element}{pair[1]}"]))
+
+proc partOneAndTwo(polymerization: Polymerization, steps: int): int =
     var polymerization = polymerization
+
+    var emptyPairObjects = getInitialPairs(polymerization.rules)
+    var currentPairs = emptyPairObjects
+    var elementCounts: Table[char, int]
+    for element in polymerization.rules.values:
+        if not elementCounts.hasKey(element):
+            elementCounts[element] = 0
+    for c in polymerization.pTemplate:
+        inc elementCounts[c]
+    for pair in getPairs(polymerization.pTemplate):
+        for currentPair in currentPairs.mitems:
+            if currentPair.identifier == pair:
+                inc currentPair.count
+
     for i in 1..steps:
-        let pairs = getPairs(polymerization.pTemplate)
+        var newPairs = emptyPairObjects
 
-        var toInsert: seq[tuple[idx: int, element: char]]
-        for idx, pair in pairs:
-            if polymerization.rules.hasKey(pair):
-                toInsert.add((idx: idx + 1, element: polymerization.rules[pair]))
+        for pair in currentPairs:
+            elementCounts[pair.createsElement] += pair.count
+            for createdPair in pair.createsPairs:
+                for newPair in newPairs.mitems:
+                    if newPair.identifier == createdPair:
+                        newPair.count += pair.count
+        
+        currentPairs = newPairs
 
-        for insertion in toInsert.reversed:
-            polymerization.pTemplate.insert($insertion.element, insertion.idx)
+    var smallest = 0
+    var largest = 0
 
-    var characterCounts = toCountTable(polymerization.pTemplate)
+    var idx = 0
+    for element in elementCounts.values:
+        if idx == 0:
+            smallest = element
 
-    let largest = characterCounts.largest.key
-    let smallest = characterCounts.smallest.key
+        if element > largest:
+            largest = element
+        
+        if element < smallest:
+            smallest = element
 
-    result = characterCounts[largest] - characterCounts[smallest]
+        inc idx
+
+    result = largest - smallest
 
 
 let polymerization = loadData("day14/day14.txt")
 
-echo "Part one: ", partOne(polymerization, 10)
+echo "Part one: ", partOneAndTwo(polymerization, 10)
+echo "Part two: ", partOneAndTwo(polymerization, 40)
             
